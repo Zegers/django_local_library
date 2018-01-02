@@ -1,4 +1,4 @@
-from django.shortcuts import render, get_object_or_404
+from django.shortcuts import render, get_object_or_404, redirect
 from django.views import generic
 from django.http import HttpResponseRedirect
 from django.urls import reverse, reverse_lazy
@@ -8,6 +8,8 @@ import datetime
 from django.contrib.auth.mixins import PermissionRequiredMixin, LoginRequiredMixin
 from django.contrib.auth.decorators import permission_required
 from django.views.generic.edit import CreateView, UpdateView, DeleteView
+from django.contrib.auth import login, authenticate
+from django.contrib.auth.forms import UserCreationForm
 
 
 from .models import Book, Author, BookInstance, Genre
@@ -94,6 +96,22 @@ def renew_book_librarian(request, pk):
         form = RenewBookForm(initial={'renewal_date': proposed_renewal_date,})
 
     return render(request, 'catalog/book_renew_librarian.html', {'form': form, 'bookinst':book_inst})
+
+
+def UserSignup(request):
+    if request.method == 'POST':
+        form = UserCreationForm(request.POST)
+        if form.is_valid():
+            form.save()
+            username = form.cleaned_data.get('username')
+            raw_password = form.cleaned_data.get('password1')
+            user = authenticate(username=username, password=raw_password)
+            login(request, user)
+            return redirect('index')
+    else:
+        form = UserCreationForm()
+    return render(request, 'catalog/signup.html', {'form': form})
+
 
 class AuthorCreate(CreateView):
     model = Author
